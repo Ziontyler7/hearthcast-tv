@@ -8,12 +8,13 @@
 
 ## 1. Automated Verification Gates (`6 / 6 Passing`)
 
-- [x] **Gate 1 (`SpatialFocusEngine`)**: 2D directional D-Pad focus, row clamping, nearest-column vertical selection, orphaned-focus recovery, and WCAG AAA `9.4:1` contrast compliance.
+- [x] **Gate 1 (`SpatialFocusEngine`)**: 2D directional D-Pad focus, row clamping, nearest-column vertical selection, `TVFocusGuideView` row focus memory, orphaned-focus recovery, 5% Overscan Safe Area (`96×54px`), and WCAG AAA `9.4:1` contrast compliance.
 - [x] **Gate 2 (`TriviaBlitzEngine`)**: Speed-bonus interpolation (`1000` base + `0..500` speed + `150` streak), idempotent first-answer lock-in, and podium leaderboard sorting.
 - [x] **Gate 3 (`StoryTheaterEngine`)**: Branching story scene graph, majority voting, and deterministic Fair Underdog Turn-Taking Tiebreaker.
 - [x] **Gate 4 (`CouchPartySyncBus`)**: 4-character Room Code (`FIRE-4`), monotonic `seq` deduplication, room isolation, and mid-round disconnect/reconnect seat preservation.
-- [x] **Gate 5 (`VegaContentLauncher` & `KeplerAdapter`)**: `hearthcast://launch` deep-link URI router, Kepler `eventKeyAction` key-up filtering, and Alexa Voice Remote natural-language directives.
-- [x] **Gate 6 (`Manifest & Bundle Audit`)**: Valid Vega OS `manifest.toml`, strict port isolation (`127.0.0.1:5180`), and zero external CDN dependencies.
+- [x] **Gate 5 (`VegaContentLauncher`, `KeplerAdapter` & `BedrockPackGenerator`)**: Official `@amazon-devices/kepler-media-content-launcher` (`IContentLauncherHandler.handleLaunchContent`), `hearthcast://launch` deep-link URI router, Kepler `eventKeyAction` key-up filtering, Alexa Voice Remote directives, and AWS Builder Mini Challenge (`us.amazon.nova-pro-v1:0`) Converse schema.
+- [x] **Gate 6 (`Vega SDK 0.24+ Manifest, Friction Log & Bundle Audit`)**: Valid Vega OS `manifest.toml` (`[os.version] 1.2`, `IContentLauncherServer`, `/com.amazon.kepler.media@IContentLauncher1`), `+10% Bonus` [`devpost/FRICTION_LOG.md`](file:///Users/zion/Desktop/hearthcast-tv/devpost/FRICTION_LOG.md), strict port isolation (`127.0.0.1:5180`), and zero external CDN dependencies.
+
 
 ---
 

@@ -16,11 +16,13 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
+  auditOverscanSafeArea,
   auditTenFootErgonomics,
   createSpatialFocusState,
   ensureValidFocus,
   mapKeyToRemoteAction,
   moveSpatialFocus,
+  restoreRowFocusMemory,
   type FocusNode,
 } from '../lib/tv/spatial-focus-engine.ts';
 import {
@@ -49,16 +51,22 @@ import {
   parseVoiceDirective,
 } from '../lib/vega/vega-content-launcher.ts';
 import {
+  ContentLauncherStatusType,
+  createKeplerContentLauncherHandler,
   detectVegaRuntimeCapabilities,
   handleVegaLauncherPayload,
   mapKeplerHWEventToRemoteAction,
 } from '../lib/vega/kepler-runtime-adapter.ts';
+import {
+  AMAZON_DEVELOPER_FRICTION_LOG,
+  synthesizeBedrockFamilyTriviaPack,
+} from '../lib/vega/bedrock-pack-generator.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const PROJECT_ROOT = path.resolve(__dirname, '../..');
 
-function runVerificationSuite(): void {
+async function runVerificationSuite(): Promise<void> {
   const startTime = performance.now();
   let passedGates = 0;
 
@@ -67,7 +75,7 @@ function runVerificationSuite(): void {
   console.log('================================================================');
 
   // ---------------------------------------------------------------------------
-  // GATE 1: 10-Foot Fire TV Spatial Focus Engine & Orphaned Focus Recovery
+  // GATE 1: 10-Foot Fire TV Spatial Focus Engine, 5% Overscan & Focus Memory
   // ---------------------------------------------------------------------------
   {
     const nodes: FocusNode[] = [
@@ -99,12 +107,16 @@ function runVerificationSuite(): void {
     state = moveSpatialFocus(state, 'UP');
     assert.equal(state.activeNodeId, 'nav-1');
 
+    // TVFocusGuideView Row Focus Memory: restoring row 1 remembers tile-2
+    const restoredRow1 = restoreRowFocusMemory(state, 1);
+    assert.equal(restoredRow1.activeNodeId, 'tile-2');
+
     // Orphaned focus recovery when active node is unmounted
     const reducedNodes = nodes.filter((n) => n.id !== 'nav-1');
     const recovered = ensureValidFocus({ ...state, nodes: reducedNodes }, 'tile-0');
     assert.equal(recovered.activeNodeId, 'tile-0');
 
-    // Remote key mapping & 10-foot ergonomics audit
+    // Remote key mapping & 10-foot ergonomics + 5% Overscan Safe Area audit
     assert.equal(mapKeyToRemoteAction('ArrowDown'), 'DOWN');
     assert.equal(mapKeyToRemoteAction('Enter'), 'SELECT');
     assert.equal(mapKeyToRemoteAction('Escape'), 'BACK');
@@ -115,8 +127,15 @@ function runVerificationSuite(): void {
     assert.equal(audit.minHeightCompliant, true);
     assert.equal(audit.contrastCompliant, true);
 
+    const overscan = auditOverscanSafeArea(1920, 1080, 96, 54);
+    assert.equal(overscan.safeZoneCompliant, true);
+    assert.equal(overscan.dpGridWidth, 960);
+    assert.equal(overscan.dpGridHeight, 540);
+    assert.equal(overscan.requiredHorizontalInsetPx, 96);
+    assert.equal(overscan.requiredVerticalInsetPx, 54);
+
     passedGates++;
-    console.log('  ✅ Gate 1 Passed: 10-Foot Fire TV Spatial Focus & Orphaned Recovery');
+    console.log('  ✅ Gate 1 Passed: 10-Foot Spatial Focus, 5% Overscan & Focus Memory');
   }
 
   // ---------------------------------------------------------------------------
@@ -337,7 +356,7 @@ function runVerificationSuite(): void {
   }
 
   // ---------------------------------------------------------------------------
-  // GATE 5: Amazon Vega OS Content Launcher Deep-Links & Alexa Voice Directives
+  // GATE 5: Vega OS Content Launcher (`IContentLauncherHandler`), Voice & Bedrock
   // ---------------------------------------------------------------------------
   {
     assert.ok(FIRE_TV_CONTENT_ROW.length >= 5);
@@ -386,7 +405,29 @@ function runVerificationSuite(): void {
 
     const caps = detectVegaRuntimeCapabilities();
     assert.equal(caps.packageId, 'com.hearthcast.tv.familynight');
-    assert.equal(caps.supportsContentLauncher, true);
+    assert.equal(caps.osVersionTarget, '1.2');
+    assert.equal(caps.contentLauncherInterface, 'com.amazon.kepler.media.IContentLauncherServer');
+    assert.equal(caps.contentLauncherModuleId, '/com.amazon.kepler.media@IContentLauncher1');
+
+    // Official @amazon-devices/kepler-media-content-launcher IContentLauncherHandler
+    const handler = createKeplerContentLauncherHandler();
+    const launchRes = await handler.handleLaunchContent(
+      { parameterList: [{ paramType: 'ENTITY', value: 'Cosmic Explorers' }] },
+      true,
+      { pageContext: 'UNIVERSAL_SEARCH' }
+    );
+    assert.equal(launchRes.contentLauncherStatus, ContentLauncherStatusType.SUCCESS);
+    assert.equal(launchRes.resolvedTarget?.mode, 'TRIVIA');
+    assert.equal(launchRes.resolvedTarget?.contentId, 'cosmic-explorers');
+
+    const emptyRes = await handler.handleLaunchContent({ parameterList: [] }, false, {});
+    assert.equal(emptyRes.contentLauncherStatus, ContentLauncherStatusType.URL_NOT_AVAILABLE);
+
+    // AWS Builder Mini Challenge (Amazon Nova Pro Converse Schema) + Friction Log
+    const bedrockOut = synthesizeBedrockFamilyTriviaPack('Solar System Rovers');
+    assert.equal(bedrockOut.converseSpec.modelId, 'us.amazon.nova-pro-v1:0');
+    assert.equal(bedrockOut.generatedPack.questions.length, 3);
+    assert.ok(AMAZON_DEVELOPER_FRICTION_LOG.length >= 5);
 
     const bundle = handleVegaLauncherPayload({
       uri: 'hearthcast://launch?mode=story&book=starship-cozy-comet',
@@ -396,20 +437,26 @@ function runVerificationSuite(): void {
     assert.equal(bundle.voiceDirective?.type, 'REMOTE_ACTION');
 
     passedGates++;
-    console.log('  ✅ Gate 5 Passed: Vega OS Content Launcher, Kepler Adapter & Voice Directives');
+    console.log('  ✅ Gate 5 Passed: IContentLauncherHandler, Kepler Adapter & AWS Bedrock Nova Pro');
   }
 
   // ---------------------------------------------------------------------------
-  // GATE 6: Vega OS Manifest, Port 5180 Isolation & Zero-CDN Bundle Audit
+  // GATE 6: Vega OS SDK 0.24+ Manifest, Friction Log, Port 5180 & Zero-CDN Audit
   // ---------------------------------------------------------------------------
   {
     const manifestPath = path.join(PROJECT_ROOT, 'manifest.toml');
+    const frictionLogPath = path.join(PROJECT_ROOT, 'devpost/FRICTION_LOG.md');
     const viteConfigPath = path.join(PROJECT_ROOT, 'vite.config.ts');
     const indexHtmlPath = path.join(PROJECT_ROOT, 'index.html');
 
     const manifestText = fs.readFileSync(manifestPath, 'utf8');
     assert.ok(manifestText.includes('id = "com.hearthcast.tv.familynight"'));
-    assert.ok(manifestText.includes('com.amazon.kepler.media.content_launcher.1'));
+    assert.ok(manifestText.includes('[os.version]'));
+    assert.ok(manifestText.includes('target = "1.2"'));
+    assert.ok(manifestText.includes('com.amazon.kepler.media.IContentLauncherServer'));
+    assert.ok(manifestText.includes('/com.amazon.kepler.media@IContentLauncher1'));
+
+    assert.ok(fs.existsSync(frictionLogPath), 'devpost/FRICTION_LOG.md must exist for +10% bonus');
 
     const viteText = fs.readFileSync(viteConfigPath, 'utf8');
     assert.ok(viteText.includes("host: '127.0.0.1'"));
@@ -420,7 +467,7 @@ function runVerificationSuite(): void {
     assert.ok(!htmlText.includes('https://cdn.'), 'Zero external CDN links in index.html');
 
     passedGates++;
-    console.log('  ✅ Gate 6 Passed: Vega OS manifest.toml, Port 5180 Isolation & Zero-CDN Audit');
+    console.log('  ✅ Gate 6 Passed: Vega SDK 0.24+ manifest.toml, Friction Log & Port 5180 Audit');
   }
 
   const elapsedMs = (performance.now() - startTime).toFixed(2);
@@ -430,3 +477,4 @@ function runVerificationSuite(): void {
 }
 
 runVerificationSuite();
+

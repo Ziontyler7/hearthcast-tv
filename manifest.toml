@@ -1,4 +1,4 @@
-# Amazon Vega OS / Fire TV Application Manifest (Kepler Schema v0.1)
+# Amazon Vega OS / Fire TV Application Manifest (Vega SDK 0.24+ / Kepler Schema v1)
 schema-version = 1
 
 [package]
@@ -6,19 +6,44 @@ id = "com.hearthcast.tv.familynight"
 title = "HearthCast TV: Family Trivia & Story Night"
 version = "1.0.0"
 publisher = "HearthCast Studio"
+icon = "@image/hearthcast_icon.png"
 description = "Interactive 10-foot living-room family trivia blitz and branching bedtime story theater with D-Pad spatial focus, Alexa/Voice command parity, and instant second-screen QR couch party join."
+
+[os.version]
+target = "1.2"
+min = "1.2"
 
 [components]
 
 [[components.interactive]]
 id = "com.hearthcast.tv.familynight.main"
+main = true
 runtime-module = "/com.amazon.kepler.keplerscript.runtime.loader_2@IKeplerScript_2_0"
 launch-type = "singleton"
-categories = ["com.amazon.category.main", "com.amazon.category.game", "com.amazon.category.kids_family"]
+categories = ["com.amazon.category.main", "com.amazon.category.kepler.media", "com.amazon.category.game", "com.amazon.category.kids_family"]
+
+[[extras]]
+key = "interface.provider"
+component-id = "com.hearthcast.tv.familynight.main"
+
+[[extras.value.application.interface]]
+interface_name = "com.amazon.kepler.media.IContentLauncherServer"
+attribute_options = ["partner-id"]
+static-values = { partner-id = "HEARTHCAST_FAMILY_TV" }
+
+[needs]
+[[needs.module]]
+id = "/com.amazon.kepler.media@IContentLauncher1"
 
 [wants]
 [[wants.service]]
 id = "com.amazon.kepler.media.content_launcher.1"
+
+[[wants.service]]
+id = "com.amazon.media.server"
+
+[[wants.service]]
+id = "com.amazon.mediametrics.service"
 
 [[wants.service]]
 id = "com.amazon.input.key_events.1"
@@ -31,3 +56,4 @@ id = "com.amazon.voice.directive_handler.1"
 id = "com.hearthcast.tv.familynight.main"
 uri-schemes = ["hearthcast"]
 deep-link-hosts = ["launch", "trivia", "story", "party"]
+

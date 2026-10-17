@@ -299,3 +299,85 @@ export function auditTenFootErgonomics(
     issues,
   };
 }
+
+export interface OverscanSafeAreaAudit {
+  canvasWidthPx: number;
+  canvasHeightPx: number;
+  dpGridWidth: number;
+  dpGridHeight: number;
+  requiredHorizontalInsetPx: number;
+  requiredVerticalInsetPx: number;
+  configuredHorizontalInsetPx: number;
+  configuredVerticalInsetPx: number;
+  safeZoneCompliant: boolean;
+}
+
+/**
+ * Validates Amazon Fire TV's 10-Foot 5% Overscan Safe Area Rule:
+ * - On a 1080p canvas (1920x1080 px, which maps to 960x540 dp at xhdpi),
+ *   interactive elements and text must stay inside a 5% safe margin
+ *   (>= 96px horizontal, >= 54px vertical).
+ */
+export function auditOverscanSafeArea(
+  canvasWidthPx = 1920,
+  canvasHeightPx = 1080,
+  configuredHorizontalInsetPx = 96,
+  configuredVerticalInsetPx = 54
+): OverscanSafeAreaAudit {
+  const requiredHorizontalInsetPx = Math.ceil(canvasWidthPx * 0.05);
+  const requiredVerticalInsetPx = Math.ceil(canvasHeightPx * 0.05);
+  const safeZoneCompliant =
+    configuredHorizontalInsetPx >= requiredHorizontalInsetPx &&
+    configuredVerticalInsetPx >= requiredVerticalInsetPx;
+
+  return {
+    canvasWidthPx,
+    canvasHeightPx,
+    dpGridWidth: Math.round(canvasWidthPx / 2),
+    dpGridHeight: Math.round(canvasHeightPx / 2),
+    requiredHorizontalInsetPx,
+    requiredVerticalInsetPx,
+    configuredHorizontalInsetPx,
+    configuredVerticalInsetPx,
+    safeZoneCompliant,
+  };
+}
+
+/**
+ * Restores focus to the most recently focused enabled node in `targetRow`
+ * (mirroring `@amazon-devices/react-native-kepler` `TVFocusGuideView` Focus Memory).
+ * Falls back to the leftmost enabled node in `targetRow` if no prior history exists.
+ */
+export function restoreRowFocusMemory(
+  state: SpatialFocusState,
+  targetRow: number
+): SpatialFocusState {
+  const validated = ensureValidFocus(state);
+  const enabledInRow = getEnabledNodes(validated.nodes).filter(
+    (n) => n.row === targetRow
+  );
+  if (enabledInRow.length === 0) {
+    return validated;
+  }
+
+  // Search focusHistory from most recent to oldest for a node in targetRow
+  for (let i = validated.focusHistory.length - 1; i >= 0; i--) {
+    const candidateId = validated.focusHistory[i];
+    const match = enabledInRow.find((n) => n.id === candidateId);
+    if (match) {
+      return {
+        ...validated,
+        activeNodeId: match.id,
+        focusHistory: [...validated.focusHistory.slice(-15), match.id],
+      };
+    }
+  }
+
+  const fallback = enabledInRow[0];
+  return {
+    ...validated,
+    activeNodeId: fallback.id,
+    focusHistory: [...validated.focusHistory.slice(-15), fallback.id],
+  };
+}
+

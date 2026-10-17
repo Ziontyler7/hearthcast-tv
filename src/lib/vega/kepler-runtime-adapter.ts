@@ -30,10 +30,70 @@ export interface KeplerHWEvent {
 
 export interface VegaRuntimeCapabilities {
   platform: 'VEGA_KEPLER' | 'FIRE_TV_SILK_WEB';
+  osVersionTarget: string;
+  osVersionMin: string;
+  contentLauncherInterface: 'com.amazon.kepler.media.IContentLauncherServer';
+  contentLauncherModuleId: '/com.amazon.kepler.media@IContentLauncher1';
   supportsContentLauncher: boolean;
   supportsHardwareDPad: boolean;
   supportsVoiceDirectives: boolean;
   packageId: string;
+}
+
+/**
+ * Mirrors `@amazon-devices/kepler-media-content-launcher` `ContentLauncherStatusType`.
+ */
+export const ContentLauncherStatusType = {
+  SUCCESS: 'SUCCESS',
+  AUTH_FAILED: 'AUTH_FAILED',
+  URL_NOT_AVAILABLE: 'URL_NOT_AVAILABLE',
+  NOT_FOUND: 'NOT_FOUND',
+} as const;
+
+export type ContentLauncherStatusValue =
+  (typeof ContentLauncherStatusType)[keyof typeof ContentLauncherStatusType];
+
+export interface IContentSearchParameter {
+  paramType: 'ENTITY' | 'GENRE' | 'FRANCHISE' | 'KEYWORD';
+  value: string;
+  externalIdList?: Array<{ name: string; value: string }>;
+}
+
+/**
+ * Mirrors `@amazon-devices/kepler-media-content-launcher` `IContentSearch`.
+ */
+export interface IContentSearch {
+  parameterList: IContentSearchParameter[];
+}
+
+/**
+ * Mirrors `@amazon-devices/kepler-media-content-launcher` `ILaunchContentOptionalFields`.
+ */
+export interface ILaunchContentOptionalFields {
+  pageContext?: string;
+  requesterId?: string;
+  deepLinkUri?: string;
+}
+
+/**
+ * Mirrors `@amazon-devices/kepler-media-content-launcher` `ILauncherResponse`.
+ */
+export interface ILauncherResponse {
+  contentLauncherStatus: ContentLauncherStatusValue;
+  resolvedTarget?: DeepLinkTarget;
+  autoPlayApplied?: boolean;
+  diagnosticMessage?: string;
+}
+
+/**
+ * Mirrors `@amazon-devices/kepler-media-content-launcher` `IContentLauncherHandler`.
+ */
+export interface IContentLauncherHandler {
+  handleLaunchContent(
+    contentSearch: IContentSearch,
+    autoPlay: boolean,
+    optionalFields: ILaunchContentOptionalFields
+  ): Promise<ILauncherResponse>;
 }
 
 /**
@@ -47,6 +107,10 @@ export function detectVegaRuntimeCapabilities(): VegaRuntimeCapabilities {
 
   return {
     platform: isKeplerNative ? 'VEGA_KEPLER' : 'FIRE_TV_SILK_WEB',
+    osVersionTarget: '1.2',
+    osVersionMin: '1.2',
+    contentLauncherInterface: 'com.amazon.kepler.media.IContentLauncherServer',
+    contentLauncherModuleId: '/com.amazon.kepler.media@IContentLauncher1',
     supportsContentLauncher: true,
     supportsHardwareDPad: true,
     supportsVoiceDirectives: true,
@@ -110,3 +174,74 @@ export function handleVegaLauncherPayload(payload: {
     voiceDirective,
   };
 }
+
+/**
+ * Creates a compliant `@amazon-devices/kepler-media-content-launcher`
+ * `IContentLauncherHandler` whose `handleLaunchContent` method resolves
+ * Universal Search & Browse (`IContentSearch`) or explicit `deepLinkUri`
+ * payloads into a validated `DeepLinkTarget` and `ILauncherResponse`.
+ */
+export function createKeplerContentLauncherHandler(
+  onTargetLaunched?: (target: DeepLinkTarget, autoPlay: boolean) => void
+): IContentLauncherHandler {
+  return {
+    async handleLaunchContent(
+      contentSearch: IContentSearch,
+      autoPlay: boolean,
+      optionalFields: ILaunchContentOptionalFields
+    ): Promise<ILauncherResponse> {
+      if (optionalFields?.deepLinkUri) {
+        const resolved = parseVegaDeepLink(optionalFields.deepLinkUri);
+        onTargetLaunched?.(resolved, autoPlay);
+        return {
+          contentLauncherStatus: ContentLauncherStatusType.SUCCESS,
+          resolvedTarget: resolved,
+          autoPlayApplied: autoPlay,
+          diagnosticMessage: `Resolved deepLinkUri (${optionalFields.deepLinkUri}) -> ${resolved.mode}:${resolved.contentId ?? 'HOME'}`,
+        };
+      }
+
+      const firstParam = contentSearch?.parameterList?.[0];
+      if (!firstParam || !firstParam.value?.trim()) {
+        return {
+          contentLauncherStatus: ContentLauncherStatusType.URL_NOT_AVAILABLE,
+          diagnosticMessage: 'Empty IContentSearch parameterList.',
+        };
+      }
+
+      const externalId = firstParam.externalIdList?.[0]?.value;
+      if (externalId && externalId.startsWith('hearthcast://')) {
+        const resolved = parseVegaDeepLink(externalId);
+        onTargetLaunched?.(resolved, autoPlay);
+        return {
+          contentLauncherStatus: ContentLauncherStatusType.SUCCESS,
+          resolvedTarget: resolved,
+          autoPlayApplied: autoPlay,
+          diagnosticMessage: `Resolved externalId (${externalId}) -> ${resolved.mode}:${resolved.contentId ?? 'HOME'}`,
+        };
+      }
+
+      const directive = parseVoiceDirective(firstParam.value);
+      if (directive.type === 'LAUNCH_MODE') {
+        const resolved: DeepLinkTarget = {
+          mode: directive.mode,
+          contentId: directive.targetId,
+          role: 'tv',
+        };
+        onTargetLaunched?.(resolved, autoPlay);
+        return {
+          contentLauncherStatus: ContentLauncherStatusType.SUCCESS,
+          resolvedTarget: resolved,
+          autoPlayApplied: autoPlay,
+          diagnosticMessage: `Resolved IContentSearch ("${firstParam.value}") -> ${resolved.mode}:${resolved.contentId ?? 'HOME'}`,
+        };
+      }
+
+      return {
+        contentLauncherStatus: ContentLauncherStatusType.NOT_FOUND,
+        diagnosticMessage: `No matching Fire TV catalog item for "${firstParam.value}"`,
+      };
+    },
+  };
+}
+
