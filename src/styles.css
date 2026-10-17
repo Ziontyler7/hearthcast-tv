@@ -1,0 +1,69 @@
+:root {
+  color-scheme: dark;
+  --bg-obsidian: #070b14;
+  --bg-panel: #0f172a;
+  --bg-card: #162038;
+  --bg-card-hover: #1e293b;
+  --fire-amber: #ff9900;
+  --fire-amber-glow: rgba(255, 153, 0, 0.45);
+  --sky-cyan: #38bdf8;
+  --emerald-ok: #34d399;
+  --rose-alert: #fb7185;
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  background: radial-gradient(circle at 50% 0%, #172554 0%, #070b14 68%);
+  color: var(--text-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* 10-Foot Fire TV Spatial Focus Ring (WCAG AAA 9.2:1 contrast against dark slate) */
+.tv-focusable {
+  position: relative;
+  min-height: 52px;
+  border: 2px solid rgba(148, 163, 184, 0.22);
+  border-radius: 16px;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  transition: transform 140ms cubic-bezier(0.2, 0.9, 0.2, 1),
+    border-color 140ms ease,
+    box-shadow 140ms ease,
+    background-color 140ms ease;
+  cursor: pointer;
+  text-align: left;
+}
+
+.tv-focusable:hover {
+  background: var(--bg-card-hover);
+  border-color: rgba(255, 153, 0, 0.65);
+}
+
+.tv-focused {
+  border-color: var(--fire-amber) !important;
+  box-shadow: 0 0 0 4px var(--fire-amber-glow), 0 14px 32px rgba(0, 0, 0, 0.65) !important;
+  transform: scale(1.025);
+  background: linear-gradient(135deg, #1e293b 0%, #172554 100%) !important;
+  z-index: 5;
+}
+
+.tv-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}

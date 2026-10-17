@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "useDefineForClassFields": true,
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true
+  },
+  "files": [
+    "src/main.tsx",
+    "src/App.tsx",
+    "src/lib/tv/spatial-focus-engine.ts",
+    "src/lib/trivia/trivia-blitz-engine.ts",
+    "src/lib/story/story-theater-engine.ts",
+    "src/lib/party/couch-party-sync.ts",
+    "src/lib/vega/vega-content-launcher.ts",
+    "src/lib/vega/kepler-runtime-adapter.ts",
+    "src/test/hearthcast-verification.test.ts"
+  ]
+}
