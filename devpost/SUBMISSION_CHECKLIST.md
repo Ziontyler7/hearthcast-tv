@@ -2,7 +2,7 @@
 
 **Deadline:** October 23, 2026  
 **Project:** HearthCast TV (`com.hearthcast.tv.familynight`)  
-**Repository:** `/Users/zion/Desktop/hearthcast-tv`
+**Repository:** `hearthcast-tv`
 
 ---
 
@@ -13,7 +13,7 @@
 - [x] **Gate 3 (`StoryTheaterEngine`)**: Branching story scene graph, majority voting, and deterministic Fair Underdog Turn-Taking Tiebreaker.
 - [x] **Gate 4 (`CouchPartySyncBus`)**: 4-character Room Code (`FIRE-4`), monotonic `seq` deduplication, room isolation, and mid-round disconnect/reconnect seat preservation.
 - [x] **Gate 5 (`VegaContentLauncher`, `KeplerAdapter` & `BedrockPackGenerator`)**: Official `@amazon-devices/kepler-media-content-launcher` (`IContentLauncherHandler.handleLaunchContent`), `hearthcast://launch` deep-link URI router, Kepler `eventKeyAction` key-up filtering, Alexa Voice Remote directives, and AWS Builder Mini Challenge (`us.amazon.nova-pro-v1:0`) Converse schema.
-- [x] **Gate 6 (`Vega SDK 0.24+ Manifest, Friction Log & Bundle Audit`)**: Valid Vega OS `manifest.toml` (`[os.version] 1.2`, `IContentLauncherServer`, `/com.amazon.kepler.media@IContentLauncher1`), `+10% Bonus` [`devpost/FRICTION_LOG.md`](file:///Users/zion/Desktop/hearthcast-tv/devpost/FRICTION_LOG.md), strict port isolation (`127.0.0.1:5180`), and zero external CDN dependencies.
+- [x] **Gate 6 (`Vega SDK 0.24+ Manifest, Friction Log & Bundle Audit`)**: Valid Vega OS `manifest.toml` (`[os.version] 1.2`, `IContentLauncherServer`, `/com.amazon.kepler.media@IContentLauncher1`), `+10% Bonus` [`devpost/FRICTION_LOG.md`](FRICTION_LOG.md), strict port isolation (`127.0.0.1:5180`), and zero external CDN dependencies.
 
 
 ---

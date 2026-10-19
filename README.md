@@ -28,19 +28,19 @@ Most living-room streaming screens are passive: families scroll for 20 minutes a
 
 ## 📂 Repository Structure
 
-- [`manifest.toml`](file:///Users/zion/Desktop/hearthcast-tv/manifest.toml) — Amazon Vega OS SDK `0.24+` (`[os.version] 1.2`) application manifest, `IContentLauncherServer` extras & `/com.amazon.kepler.media@IContentLauncher1` module needs
-- [`src/lib/tv/spatial-focus-engine.ts`](file:///Users/zion/Desktop/hearthcast-tv/src/lib/tv/spatial-focus-engine.ts) — 2D D-Pad spatial focus matrix, `TVFocusGuideView` row focus memory, orphaned-focus recovery, 5% Overscan (`96×54px`) & WCAG AAA ergonomics audit
-- [`src/lib/trivia/trivia-blitz-engine.ts`](file:///Users/zion/Desktop/hearthcast-tv/src/lib/trivia/trivia-blitz-engine.ts) — Multi-player trivia scoring, speed-bonus interpolation & streak engine
-- [`src/lib/story/story-theater-engine.ts`](file:///Users/zion/Desktop/hearthcast-tv/src/lib/story/story-theater-engine.ts) — Branching bedtime story graph & Fair Underdog Turn-Taking Tiebreaker
-- [`src/lib/party/couch-party-sync.ts`](file:///Users/zion/Desktop/hearthcast-tv/src/lib/party/couch-party-sync.ts) — Second-Screen QR room state, monotonic `seq` deduplication & seat preservation
-- [`src/lib/vega/vega-content-launcher.ts`](file:///Users/zion/Desktop/hearthcast-tv/src/lib/vega/vega-content-launcher.ts) — Vega OS `hearthcast://` deep-link router, Fire TV Home Row catalog & Alexa voice parser
-- [`src/lib/vega/kepler-runtime-adapter.ts`](file:///Users/zion/Desktop/hearthcast-tv/src/lib/vega/kepler-runtime-adapter.ts) — `@amazon-devices/kepler-media-content-launcher` (`IContentLauncherHandler.handleLaunchContent`) & `@amazon-devices/react-native-kepler` hardware event bridge
-- [`src/lib/vega/bedrock-pack-generator.ts`](file:///Users/zion/Desktop/hearthcast-tv/src/lib/vega/bedrock-pack-generator.ts) — AWS Builder Mini Challenge (`us.amazon.nova-pro-v1:0` Bedrock Converse Schema) & 5-Point Developer Friction Log Registry
-- [`src/test/hearthcast-verification.test.ts`](file:///Users/zion/Desktop/hearthcast-tv/src/test/hearthcast-verification.test.ts) — 6-gate deterministic verification suite (`npm test`)
-- [`devpost/FRICTION_LOG.md`](file:///Users/zion/Desktop/hearthcast-tv/devpost/FRICTION_LOG.md) — Official Build, Ship, Shape Developer Friction Log (`+10% Judging Score Bonus`)
-- [`devpost/PRD.md`](file:///Users/zion/Desktop/hearthcast-tv/devpost/PRD.md) — Product Requirements & Judging Alignment
-- [`devpost/ARCHITECTURE.md`](file:///Users/zion/Desktop/hearthcast-tv/devpost/ARCHITECTURE.md) — System Architecture & Vega OS Integration Guide
-- [`devpost/SUBMISSION_CHECKLIST.md`](file:///Users/zion/Desktop/hearthcast-tv/devpost/SUBMISSION_CHECKLIST.md) — Devpost Submission & Demo Video Script
+- [`manifest.toml`](manifest.toml) — Amazon Vega OS SDK `0.24+` (`[os.version] 1.2`) application manifest, `IContentLauncherServer` extras & `/com.amazon.kepler.media@IContentLauncher1` module needs
+- [`src/lib/tv/spatial-focus-engine.ts`](src/lib/tv/spatial-focus-engine.ts) — 2D D-Pad spatial focus matrix, `TVFocusGuideView` row focus memory, orphaned-focus recovery, 5% Overscan (`96×54px`) & WCAG AAA ergonomics audit
+- [`src/lib/trivia/trivia-blitz-engine.ts`](src/lib/trivia/trivia-blitz-engine.ts) — Multi-player trivia scoring, speed-bonus interpolation & streak engine
+- [`src/lib/story/story-theater-engine.ts`](src/lib/story/story-theater-engine.ts) — Branching bedtime story graph & Fair Underdog Turn-Taking Tiebreaker
+- [`src/lib/party/couch-party-sync.ts`](src/lib/party/couch-party-sync.ts) — Second-Screen QR room state, monotonic `seq` deduplication & seat preservation
+- [`src/lib/vega/vega-content-launcher.ts`](src/lib/vega/vega-content-launcher.ts) — Vega OS `hearthcast://` deep-link router, Fire TV Home Row catalog & Alexa voice parser
+- [`src/lib/vega/kepler-runtime-adapter.ts`](src/lib/vega/kepler-runtime-adapter.ts) — `@amazon-devices/kepler-media-content-launcher` (`IContentLauncherHandler.handleLaunchContent`) & `@amazon-devices/react-native-kepler` hardware event bridge
+- [`src/lib/vega/bedrock-pack-generator.ts`](src/lib/vega/bedrock-pack-generator.ts) — AWS Builder Mini Challenge (`us.amazon.nova-pro-v1:0` Bedrock Converse Schema) & 5-Point Developer Friction Log Registry
+- [`src/test/hearthcast-verification.test.ts`](src/test/hearthcast-verification.test.ts) — 6-gate deterministic verification suite (`npm test`)
+- [`devpost/FRICTION_LOG.md`](devpost/FRICTION_LOG.md) — Official Build, Ship, Shape Developer Friction Log (`+10% Judging Score Bonus`)
+- [`devpost/PRD.md`](devpost/PRD.md) — Product Requirements & Judging Alignment
+- [`devpost/ARCHITECTURE.md`](devpost/ARCHITECTURE.md) — System Architecture & Vega OS Integration Guide
+- [`devpost/SUBMISSION_CHECKLIST.md`](devpost/SUBMISSION_CHECKLIST.md) — Devpost Submission & Demo Video Script
 
 
 ---

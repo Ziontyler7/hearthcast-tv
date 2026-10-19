@@ -457,6 +457,30 @@ async function runVerificationSuite(): Promise<void> {
     assert.ok(manifestText.includes('/com.amazon.kepler.media@IContentLauncher1'));
 
     assert.ok(fs.existsSync(frictionLogPath), 'devpost/FRICTION_LOG.md must exist for +10% bonus');
+    assert.ok(fs.existsSync(path.join(PROJECT_ROOT, 'LICENSE')), 'Root LICENSE must exist');
+    assert.ok(fs.existsSync(path.join(PROJECT_ROOT, '.env.example')), '.env.example must exist');
+    const filesToAudit = [
+      'README.md',
+      'LICENSE',
+      '.env.example',
+      'firebase.json',
+      'package.json',
+      'src/App.tsx',
+      'devpost/DEVPOST_SUBMISSION.md',
+      'devpost/FRICTION_LOG.md',
+      'devpost/PRD.md',
+      'devpost/ARCHITECTURE.md',
+      'devpost/SUBMISSION_CHECKLIST.md',
+    ];
+    const forbidden = ['Edios', 'Sovereign', 'Citadel', 'Sanctuary', '3+3', 'Self-Play', 'Proposer', 'Adversary', 'forge.db', '5175', 'Luna', '/Users/zion'];
+    for (const rel of filesToAudit) {
+      const full = path.join(PROJECT_ROOT, rel);
+      assert.ok(fs.existsSync(full), `${rel} must exist`);
+      const content = fs.readFileSync(full, 'utf8');
+      for (const token of forbidden) {
+        assert.ok(!content.includes(token), `Forbidden token ${token} found in ${rel}`);
+      }
+    }
 
     const viteText = fs.readFileSync(viteConfigPath, 'utf8');
     assert.ok(viteText.includes("host: '127.0.0.1'"));
