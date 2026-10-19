@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HearthCast TV — Amazon Fire TV & Vega OS Developer Friction Log (+10% Bonus)</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #0b0f19;
+      color: #f8fafc;
+      line-height: 1.65;
+      max-width: 920px;
+      margin: 0 auto;
+      padding: 40px 24px 80px;
+    }
+    h1 { color: #ff9900; margin-bottom: 8px; }
+    h2 { color: #38bdf8; border-bottom: 1px solid #1e293b; padding-bottom: 8px; margin-top: 32px; }
+    .card {
+      background: #111827;
+      border: 1px solid #1e293b;
+      border-left: 4px solid #ff9900;
+      border-radius: 10px;
+      padding: 20px 24px;
+      margin-bottom: 20px;
+    }
+    .badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      margin-left: 8px;
+    }
+    .high { background: #7f1d1d; color: #fecaca; }
+    .med { background: #78350f; color: #fde68a; }
+    .low { background: #1e3a8a; color: #bfdbfe; }
+    code {
+      background: #1e293b;
+      color: #fbbf24;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.92em;
+    }
+    a { color: #ff9900; }
+  </style>
+</head>
+<body>
+  <h1>HearthCast TV — Amazon Developer Friction Log</h1>
+  <p><strong>Competition:</strong> Build, Ship, Shape: Amazon Developer Hackathon (+10% Bonus) · <strong>Track:</strong> Fire TV &amp; Amazon Vega OS + AWS Builder Mini Challenge (<a href="/">Return to Live Studio</a>)</p>
+
+  <h2>1. VEGA-FL-01 · manifest.toml [os.version] Requirement in Vega SDK 0.24+ <span class="badge high">Severity: HIGH</span></h2>
+  <div class="card">
+    <p><strong>Task Attempted:</strong> Packaging a Vega OS interactive component with autolinked <code>@amazon-devices/kepler-media-content-launcher</code> modules.</p>
+    <p><strong>Steps Taken:</strong> Initialized <code>manifest.toml</code> using early Kepler v0.1 sample schemas containing only <code>schema-version = 1</code> and <code>[package]</code>, then ran <code>vega project install</code>.</p>
+    <p><strong>Expected vs. Actual Result:</strong> Expected <code>vega project install</code> to automatically inject required OS module declarations under <code>[needs]</code>. Instead, under Vega SDK 0.24+, omitting <code>[os.version]</code> (<code>target = "1.2"</code>, <code>min = "1.2"</code>) prevented autolinking and failed validation.</p>
+    <p><strong>Workaround Used:</strong> Explicitly added <code>[os.version] target = "1.2"</code>, <code>min = "1.2"</code>, and <code>[[needs.module]] id = "/com.amazon.kepler.media@IContentLauncher1"</code> in <code>manifest.toml</code> and added an automated verification test in Gate 6.</p>
+    <p><strong>Actionable Suggestion:</strong> Have <code>vega project build</code> and <code>vega project install</code> output a self-healing CLI hint (<code>Run: vega project update-manifest --os-min 1.2 --os-version 1.2</code>) whenever <code>[os.version]</code> is missing.</p>
+  </div>
+
+  <h2>2. VEGA-FL-02 · Content Launcher Nested TOML [[extras]] Component ID Matching <span class="badge med">Severity: MEDIUM</span></h2>
+  <div class="card">
+    <p><strong>Task Attempted:</strong> Registering <code>com.amazon.kepler.media.IContentLauncherServer</code> inside <code>manifest.toml</code> for Alexa voice deep-linking.</p>
+    <p><strong>Steps Taken:</strong> Added <code>[[components.interactive]]</code>, <code>[[extras]]</code> (<code>key = "interface.provider"</code>), and <code>[[offers.interaction]]</code> blocks in <code>manifest.toml</code>.</p>
+    <p><strong>Expected vs. Actual Result:</strong> Expected a schema warning if <code>component-id</code> in <code>[[extras]]</code> did not match <code>[[components.interactive]] id</code>. Instead, a mismatched ID causes Content Launcher registration to fail silently at runtime.</p>
+    <p><strong>Workaround Used:</strong> Standardized <code>com.hearthcast.tv.familynight.main</code> across all three TOML sections and added cross-reference assertions in our test suite.</p>
+    <p><strong>Actionable Suggestion:</strong> Ship a cross-reference TOML linter rule inside the Amazon Devices Builder Tools MCP server that validates <code>[[extras]].component-id</code> against declared interactive components on save.</p>
+  </div>
+
+  <h2>3. VEGA-FL-03 · useTVEventHandler Double-Firing on eventKeyAction (0 vs 1) <span class="badge high">Severity: HIGH</span></h2>
+  <div class="card">
+    <p><strong>Task Attempted:</strong> Navigating the 10-foot Fire TV Home Row and 2x2 Trivia Answer Grid using the Fire TV Remote D-Pad.</p>
+    <p><strong>Steps Taken:</strong> Subscribed to hardware remote events via <code>useTVEventHandler</code> in <code>@amazon-devices/react-native-kepler</code> and switched on <code>evt.eventType</code> (<code>up</code>, <code>down</code>, <code>left</code>, <code>right</code>, <code>select</code>).</p>
+    <p><strong>Expected vs. Actual Result:</strong> Expected one focus step per D-Pad click. Instead, physical Fire TV remotes emit both <code>eventKeyAction = 0</code> (keyDown) and <code>eventKeyAction = 1</code> (keyUp), causing focus to jump two tiles per press.</p>
+    <p><strong>Workaround Used:</strong> Explicitly filtered for <code>evt.eventKeyAction === 0</code> inside <code>mapKeplerHWEventToRemoteAction()</code> in <code>src/lib/vega/kepler-runtime-adapter.ts</code>.</p>
+    <p><strong>Actionable Suggestion:</strong> Add an optional configuration parameter <code>useTVEventHandler(handler, { triggerOn: 'keyDown' })</code> that defaults to firing only on <code>eventKeyAction === 0</code>.</p>
+  </div>
+
+  <h2>4. VEGA-FL-04 · TVFocusGuideView Orphaned Focus When Game Nodes Unmount <span class="badge med">Severity: MEDIUM</span></h2>
+  <div class="card">
+    <p><strong>Task Attempted:</strong> Transitioning from an active Trivia Blitz question timer directly to the Post-Question Reveal and Podium screens.</p>
+    <p><strong>Steps Taken:</strong> Unmounted the 4-option trivia grid when the countdown reached 0s while D-Pad focus was sitting on Option B.</p>
+    <p><strong>Expected vs. Actual Result:</strong> Expected focus to move automatically to the next visible primary action button. Without explicit fallback routing, D-Pad focus became orphaned until the user pressed BACK.</p>
+    <p><strong>Workaround Used:</strong> Built <code>ensureValidFocus()</code> and <code>restoreRowFocusMemory()</code> in <code>src/lib/tv/spatial-focus-engine.ts</code> to recover focus in 0ms whenever a node unmounts.</p>
+    <p><strong>Actionable Suggestion:</strong> Add a declarative <code>fallbackFocusDestination</code> prop on <code>TVFocusGuideView</code> that claims focus automatically when a focused child unmounts.</p>
+  </div>
+
+  <h2>5. VEGA-FL-05 · 10-Foot Television 5% Overscan Safe-Area Visibility <span class="badge low">Severity: LOW</span></h2>
+  <div class="card">
+    <p><strong>Task Attempted:</strong> Verifying that room codes, score badges, and D-Pad focus halos comply with Amazon Fire TV's 5% Overscan Safe Area (96x54px inset on 1080p).</p>
+    <p><strong>Steps Taken:</strong> Previewed the 10-foot layout in standard desktop simulators and webviews.</p>
+    <p><strong>Expected vs. Actual Result:</strong> Standard webviews render edge-to-edge without showing where television hardware overscan crops the outer 5% of the screen.</p>
+    <p><strong>Workaround Used:</strong> Built <code>auditOverscanSafeArea()</code> and added an interactive <strong>5% Overscan Guide</strong> visual boundary toggle directly in the HearthCast TV header.</p>
+    <p><strong>Actionable Suggestion:</strong> Add a 1-click "5% Overscan Safe Zone Overlay" toggle in the Vega Virtual Device (VVD) and Fire TV Web App Tester toolbar.</p>
+  </div>
+</body>
+</html>
